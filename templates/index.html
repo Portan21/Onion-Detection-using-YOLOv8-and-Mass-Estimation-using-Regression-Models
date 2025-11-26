@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onion Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-image: url('static/background.jpg'); /* URL of the background image */
+            background-size: cover; /* Ensure the background image covers the whole page */
+            background-position: inherit; /* Center the background image */
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white overlay */
+            color: #333;
+            padding: 20px;
+        }
+
+        /* 
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f4f4f9;
+            color: #333;
+            padding: 20px;
+        }
+        */
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+            margin-top: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 0.5em;
+            color: #8458d6;
+        }
+
+        h2 {
+            font-size: 1.5em;
+            margin-top: 0.8em;
+            color: #8458d6;
+        }
+
+        form {
+            margin-bottom: 1em;
+        }
+
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            color: #fff;
+            background-color: #8458d6;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #6b40b9;
+        }
+
+        #results {
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+
+        .loading {
+            font-size: 1.2em;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .results-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .results-list li {
+            padding: 8px;
+            background-color: #f9f9f9;
+            font-size: 0.9em;
+            margin-bottom: 6px;
+            border-left: 4px solid #4CAF50;
+            border-radius: 4px;
+            line-height: 1.4;
+        }
+
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Onion Detection</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <button type="submit">Upload</button>
+        </form>
+
+        <h2>Results</h2>
+        <div id="results" class="loading">No image uploaded yet.</div>
+    </div>
+
+    <script>
+        const form = document.querySelector('form');
+        const resultsDiv = document.getElementById('results');
+        
+        const loadingMessages = [
+            "Onion ang ginigisa, hindi researchers",
+            "Processing onion details...",
+            "Calculating mass and diameter...",
+            "Peeling the data...",
+            "Fun Fact: Onions can make us cry (We did)",
+        ];
+        
+        let loadingInterval;
+
+        form.onsubmit = async (event) => {
+            event.preventDefault();
+
+            resultsDiv.innerHTML = `<p class="loading">${loadingMessages[Math.floor(Math.random() * loadingMessages.length)]}</p>`;
+            loadingInterval = setInterval(() => {
+                const randomMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+                resultsDiv.innerHTML = `<p class="loading">${randomMessage}</p>`;
+            }, 1000);
+
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            
+            clearInterval(loadingInterval);
+
+            if (data.error) {
+                resultsDiv.innerHTML = `<p class="loading">Error: ${data.error}</p>`;
+            } else {
+                resultsDiv.innerHTML = '';
+
+                const img = document.createElement('img');
+                img.src = `${data.annotated_image}?t=${new Date().getTime()}`;
+                img.alt = 'Annotated Image';
+                resultsDiv.appendChild(img);
+
+                const dataList = document.createElement('ul');
+                dataList.className = 'results-list';
+                data.data.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `ID: ${item.Object}, ${item.Class}, Diameter: ${item.Diameter.toFixed(2)} (${item.Size}), Mass: ${item.Mass.toFixed(2)}`;
+                    dataList.appendChild(listItem);
+                });
+                resultsDiv.appendChild(dataList);
+            }
+        };
+    </script>
+</body>
+</html>
